@@ -1,0 +1,83 @@
+import React, {useEffect, useState} from 'react'
+import BookCard from '../components/BookCard'
+import Cart from '../components/Cart'
+import { StorageService } from '../services/storageService'
+import { showToast } from '../services/toastService'
+
+export default function Sales(){
+  const [books,setBooks] = useState([])
+  const [coffees,setCoffees] = useState([])
+  const [query,setQuery] = useState('')
+  const [cart,setCart] = useState([])
+  const [loading,setLoading] = useState(true)
+
+  const role = StorageService.getUserRole()
+  const isAdmin = role === 'admin'
+
+  useEffect(()=>{
+    setLoading(true)
+    const b = StorageService.getBooks()
+    const c = StorageService.getCoffees()
+    setBooks(b)
+    setCoffees(c)
+    setCart(StorageService.getCart())
+    setLoading(false)
+  },[])
+
+  useEffect(()=>{ StorageService.saveCart(cart) },[cart])
+
+  function handleAdd(book){
+    setCart(prev=>{
+      const uid = `${book.type || 'book'}-${book.id}`
+      const exists = prev.find(p=>p.id===uid)
+      if(exists){
+        return prev.map(p=> p.id===uid?{...p, qty: p.qty+1}: p)
+      }
+      return [...prev, { ...book, id: uid, qty:1 }]
+    })
+    try{ showToast && showToast(`${book.name} added to cart`) }catch(e){}
+  }
+  function increase(id){ setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p)) }
+  function decrease(id){ setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p)) }
+  function removeItem(id){ setCart(prev=> prev.filter(p=>p.id!==id)) }
+
+  const products = [
+    ...books.map(b=> ({...b, type: 'book'})),
+    ...coffees.map(c=> ({...c, type: 'coffee'}))
+  ]
+
+  const filtered = products.filter(b=> b.name.toLowerCase().includes(query.toLowerCase()))
+
+  if(loading) return <div className="text-center py-5">Loading...</div>
+
+  if(!isAdmin) return (
+    <div className="text-center py-5">
+      <h5>Access denied</h5>
+      <p className="text-muted">Sales Counter is for admin only. Customers can order from Books or Coffee pages.</p>
+    </div>
+  )
+
+  return (
+    <div className="row">
+      <div className="col-md-8">
+        <div className="d-flex mb-3">
+          <input className="form-control me-2" placeholder="Search products..." value={query} onChange={e=>setQuery(e.target.value)} />
+        </div>
+        <div className="row g-3">
+          {filtered.length===0 && <p className="text-muted">No products found.</p>}
+          {filtered.map(book => (
+            <div className="col-sm-6 col-lg-4" key={`${book.type}-${book.id}`}>
+              <BookCard book={book} onAdd={handleAdd} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="col-md-4">
+        <Cart items={cart} onIncrease={increase} onDecrease={decrease} onRemove={removeItem} />
+        <div className="mt-3">
+          <a href="/payment" className="btn btn-success w-100">Proceed to Payment</a>
+        </div>
+      </div>
+    </div>
+  )
+}
