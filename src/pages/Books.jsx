@@ -32,6 +32,7 @@ export default function Books(){
   const [editing,setEditing] = useState(null)
   const [showForm,setShowForm] = useState(false)
   const [loading,setLoading] = useState(true)
+  const [query,setQuery] = useState('')
 
   const role = StorageService.getUserRole()
   const isAdmin = role === 'admin'
@@ -98,6 +99,12 @@ export default function Books(){
 
   if(loading) return <div className="text-center py-5">Loading...</div>
 
+  const filteredBooks = books.filter(b => {
+    const term = query.trim().toLowerCase()
+    if(!term) return true
+    return b.name.toLowerCase().includes(term) || (b.category||'').toLowerCase().includes(term)
+  })
+
   function handleAddToCart(b){
     const uid = `book-${b.id}`
     setCart(prev=>{
@@ -112,14 +119,28 @@ export default function Books(){
     <div className="row">
       <div className="col-md-8">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4>Books</h4>
+          <div>
+            <h4>Books</h4>
+            {!isAdmin && <div className="text-muted">Search books by name or category</div>}
+          </div>
           <div>
             {isAdmin && <button className="btn btn-primary" onClick={addBook}>Add Book</button>}
           </div>
         </div>
+        {!isAdmin && (
+          <div className="mb-3">
+            <input
+              className="form-control"
+              placeholder="Search books..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+        )}
         {showForm && isAdmin && <BookForm initial={editing||{}} onCancel={() => {setShowForm(false); setEditing(null)}} onSave={saveBook} />}
         <div className="row g-3 mt-3">
-          {books.map(b=> (
+          {filteredBooks.length === 0 && <div className="col-12"><p className="text-muted">No books match your search.</p></div>}
+          {filteredBooks.map(b=> (
             <div key={b.id} className="col-sm-6 col-md-4">
               {isAdmin ? (
                 <div className="card h-100">
@@ -144,7 +165,7 @@ export default function Books(){
       </div>
       {!isAdmin && (
         <div className="col-md-4">
-          <Cart items={cart} onIncrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p))} onDecrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p))} onRemove={id=>setCart(prev=> prev.filter(p=>p.id!==id))} />
+          <Cart title="Sales Counter" items={cart} onIncrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p))} onDecrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p))} onRemove={id=>setCart(prev=> prev.filter(p=>p.id!==id))} />
           <div className="mt-3">
             <Link to="/payment" className="btn btn-success w-100">Proceed to Payment</Link>
           </div>

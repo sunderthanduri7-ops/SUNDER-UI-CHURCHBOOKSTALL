@@ -12,3 +12,34 @@ body{
 }
 .book-card{min-height:200px}
 .toast-container{position:fixed;right:1rem;top:1rem;z-index:1200}
+
+.cart-mobile-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  background: #ffffff;
+  border-top: 1px solid rgba(0,0,0,.08);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.05);
+}
+
+.cart-mobile-banner .cart-details-btn {
+  white-space: nowrap;
+}
+
+.cart-mobile-spacer {
+  height: 4.5rem;
+}
+
+@media (min-width: 768px) {
+  .cart-mobile-banner,
+  .cart-mobile-spacer {
+    display: none;
+  }
+}

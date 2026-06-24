@@ -32,6 +32,7 @@ export default function Coffee(){
   const [editing,setEditing] = useState(null)
   const [showForm,setShowForm] = useState(false)
   const [loading,setLoading] = useState(true)
+  const [query,setQuery] = useState('')
 
   const role = StorageService.getUserRole()
   const isAdmin = role === 'admin'
@@ -90,6 +91,12 @@ export default function Coffee(){
 
   if(loading) return <div className="text-center py-5">Loading...</div>
 
+  const filteredCoffees = coffees.filter(c => {
+    const term = query.trim().toLowerCase()
+    if(!term) return true
+    return c.name.toLowerCase().includes(term) || (c.size||'').toLowerCase().includes(term)
+  })
+
   function handleAddToCart(c){
     const uid = `coffee-${c.id}`
     setCart(prev=>{
@@ -104,14 +111,28 @@ export default function Coffee(){
     <div className="row">
       <div className="col-md-8">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4>Coffees</h4>
+          <div>
+            <h4>Coffees</h4>
+            {!isAdmin && <div className="text-muted">Search coffees by name or size</div>}
+          </div>
           <div>
             {isAdmin && <button className="btn btn-primary" onClick={addCoffee}>Add Coffee</button>}
           </div>
         </div>
+        {!isAdmin && (
+          <div className="mb-3">
+            <input
+              className="form-control"
+              placeholder="Search coffees..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+        )}
         {showForm && isAdmin && <CoffeeForm initial={editing||{}} onCancel={() => {setShowForm(false); setEditing(null)}} onSave={saveCoffee} />}
         <div className="row g-3 mt-3">
-          {coffees.map(c=> (
+          {filteredCoffees.length === 0 && !isAdmin && <div className="col-12"><p className="text-muted">No coffees match your search.</p></div>}
+          {filteredCoffees.map(c=> (
             <div key={c.id} className="col-sm-6 col-md-4">
               {isAdmin ? (
                 <div className="card h-100">
@@ -136,7 +157,7 @@ export default function Coffee(){
       </div>
       {!isAdmin && (
         <div className="col-md-4">
-          <Cart items={cart} onIncrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p))} onDecrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p))} onRemove={id=>setCart(prev=> prev.filter(p=>p.id!==id))} />
+          <Cart title="Sales Counter" items={cart} onIncrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p))} onDecrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p))} onRemove={id=>setCart(prev=> prev.filter(p=>p.id!==id))} />
           <div className="mt-3">
             <Link to="/payment" className="btn btn-success w-100">Proceed to Payment</Link>
           </div>
