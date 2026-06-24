@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import { Link } from 'react-router-dom'
 import BookCard from '../components/BookCard'
 import Cart from '../components/Cart'
 import { StorageService } from '../services/storageService'
@@ -76,7 +77,7 @@ export default function Sales(){
       <div className="col-md-4">
         <Cart items={cart} onIncrease={increase} onDecrease={decrease} onRemove={removeItem} />
         <div className="mt-3">
-          <a href="/payment" className="btn btn-success w-100">Proceed to Payment</a>
+          <Link to="/payment" className="btn btn-success w-100">Proceed to Payment</Link>
         </div>
         {isAdmin && (
           <div className="mt-3 d-grid gap-2">
