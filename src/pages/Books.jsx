@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import { Link } from 'react-router-dom'
 import { StorageService } from '../services/storageService'
 import BookCard from '../components/BookCard'
 import Cart from '../components/Cart'
@@ -145,7 +146,7 @@ export default function Books(){
         <div className="col-md-4">
           <Cart items={cart} onIncrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty:p.qty+1}:p))} onDecrease={id=>setCart(prev=> prev.map(p=> p.id===id?{...p,qty: Math.max(1,p.qty-1)}:p))} onRemove={id=>setCart(prev=> prev.filter(p=>p.id!==id))} />
           <div className="mt-3">
-            <a href="/payment" className="btn btn-success w-100">Proceed to Payment</a>
+            <Link to="/payment" className="btn btn-success w-100">Proceed to Payment</Link>
           </div>
         </div>
       )}

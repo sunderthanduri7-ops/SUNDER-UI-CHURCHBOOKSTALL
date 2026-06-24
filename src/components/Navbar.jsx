@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { StorageService } from '../services/storageService'
 
 export default function Navbar(){
   const [role,setRole] = useState(StorageService.getUserRole())
+  const navigate = useNavigate()
 
   useEffect(()=>{
     setRole(StorageService.getUserRole())
@@ -13,8 +14,8 @@ export default function Navbar(){
     const r = e.target.value
     StorageService.setUserRole(r)
     setRole(r)
-    if(r==='admin') window.location.href = '/login'
-    else window.location.href = '/'
+    if(r==='admin') navigate('/login')
+    else navigate('/')
   }
 
   const isAdmin = role === 'admin'
@@ -41,9 +42,9 @@ export default function Navbar(){
             {isAdmin && <li className="nav-item"><NavLink className="nav-link" to="/history">Sales History</NavLink></li>}
             <li className="nav-item d-flex align-items-center ms-3">
               {role==='admin' ? (
-                <button className="btn btn-outline-secondary btn-sm" onClick={() => { StorageService.setUserRole('customer'); window.location.href='/' }}>Logout</button>
+                <button className="btn btn-outline-secondary btn-sm" onClick={() => { StorageService.setUserRole('customer'); navigate('/') }}>Logout</button>
               ) : (
-                <button className="btn btn-outline-primary btn-sm" onClick={() => window.location.href='/login'}>Admin Login</button>
+                <button className="btn btn-outline-primary btn-sm" onClick={() => navigate('/login')}>Admin Login</button>
               )}
             </li>
           </ul>
