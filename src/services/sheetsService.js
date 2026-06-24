@@ -1,3 +1,5 @@
+export const DEFAULT_SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxnoWTogThOk7D95Wb2Z8PI6FWWyWlvawceRsrf6sMiMxG4KCGHL8iQzoATePORTm-_/exec'
+
 export async function pingSheetsEndpoint(endpoint){
   if(!endpoint) throw new Error('Missing endpoint')
   const resp = await fetch(endpoint, { method: 'GET', mode: 'cors' })
@@ -25,6 +27,72 @@ export async function syncSalesToSheets(endpoint, sales){
     return resp.json()
   }catch(err){
     // network/CORS errors end up here
+    throw new Error(err.message || 'Network error')
+  }
+}
+
+export async function fetchBooksFromSheets(endpoint){
+  if(!endpoint) throw new Error('Missing endpoint')
+  const url = endpoint + '?type=books'
+  const resp = await fetch(url, { method: 'GET', mode: 'cors' })
+  if(!resp.ok){
+    const text = await resp.text().catch(()=>'<no body>')
+    throw new Error(`Fetch books failed: ${resp.status} ${text}`)
+  }
+  const data = await resp.json()
+  return data.books || []
+}
+
+export async function saveBooksToSheets(endpoint, books){
+  if(!endpoint) throw new Error('Missing endpoint')
+  try{
+    const payload = new URLSearchParams()
+    payload.append('payload', JSON.stringify({ books }))
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: payload.toString()
+    })
+    if(!resp.ok){
+      const text = await resp.text().catch(()=>'<no body>')
+      throw new Error(`Save books failed: ${resp.status} ${text}`)
+    }
+    return resp.json()
+  }catch(err){
+    throw new Error(err.message || 'Network error')
+  }
+}
+
+export async function fetchCoffeesFromSheets(endpoint){
+  if(!endpoint) throw new Error('Missing endpoint')
+  const url = endpoint + '?type=coffees'
+  const resp = await fetch(url, { method: 'GET', mode: 'cors' })
+  if(!resp.ok){
+    const text = await resp.text().catch(()=>'<no body>')
+    throw new Error(`Fetch coffees failed: ${resp.status} ${text}`)
+  }
+  const data = await resp.json()
+  return data.coffees || []
+}
+
+export async function saveCoffeesToSheets(endpoint, coffees){
+  if(!endpoint) throw new Error('Missing endpoint')
+  try{
+    const payload = new URLSearchParams()
+    payload.append('payload', JSON.stringify({ coffees }))
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: payload.toString()
+    })
+    if(!resp.ok){
+      const text = await resp.text().catch(()=>'<no body>')
+      throw new Error(`Save coffees failed: ${resp.status} ${text}`)
+    }
+    return resp.json()
+  }catch(err){
     throw new Error(err.message || 'Network error')
   }
 }

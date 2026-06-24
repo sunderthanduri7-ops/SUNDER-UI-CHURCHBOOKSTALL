@@ -3,6 +3,7 @@ import { StorageService } from '../services/storageService'
 import BookCard from '../components/BookCard'
 import Cart from '../components/Cart'
 import { showToast } from '../services/toastService'
+import { fetchBooksFromSheets, saveBooksToSheets, DEFAULT_SHEETS_ENDPOINT } from '../services/sheetsService'
 
 function BookForm({initial, onCancel, onSave}){
   const [name,setName] = useState(initial.name||'')
@@ -36,10 +37,23 @@ export default function Books(){
   const [cart,setCart] = useState(StorageService.getCart())
 
   useEffect(()=>{
-    setLoading(true)
-    setBooks(StorageService.getBooks())
-    setCart(StorageService.getCart())
-    setLoading(false)
+    const loadBooks = async ()=>{
+      setLoading(true)
+      const localBooks = StorageService.getBooks()
+      setBooks(localBooks)
+      setCart(StorageService.getCart())
+      try{
+        const remoteBooks = await fetchBooksFromSheets(DEFAULT_SHEETS_ENDPOINT)
+        if(Array.isArray(remoteBooks) && remoteBooks.length > 0){
+          setBooks(remoteBooks)
+          StorageService.saveBooks(remoteBooks)
+        }
+      }catch(err){
+        console.warn('Book sync failed, using local books', err)
+      }
+      setLoading(false)
+    }
+    loadBooks()
   },[])
 
   useEffect(()=>{ StorageService.saveCart(cart) },[cart])
@@ -49,14 +63,19 @@ export default function Books(){
     setShowForm(true)
   }
   function editBook(b){ setEditing(b); setShowForm(true) }
-  function deleteBook(b){
+  async function deleteBook(b){
     if(!confirm(`Delete ${b.name}?`)) return
     const next = books.filter(x=> x.id!==b.id)
     setBooks(next)
     StorageService.saveBooks(next)
-    showToast('Book deleted', 'warning')
+    try{
+      await saveBooksToSheets(DEFAULT_SHEETS_ENDPOINT, next)
+      showToast('Book deleted and synced', 'warning')
+    }catch(err){
+      showToast('Book deleted locally, sync failed: ' + (err.message || err))
+    }
   }
-  function saveBook(book){
+  async function saveBook(book){
     let next
     if(book.id){
       next = books.map(b=> b.id===book.id?book:b)
@@ -68,7 +87,12 @@ export default function Books(){
     StorageService.saveBooks(next)
     setShowForm(false)
     setEditing(null)
-    showToast('Saved book')
+    try{
+      await saveBooksToSheets(DEFAULT_SHEETS_ENDPOINT, next)
+      showToast('Saved book and synced')
+    }catch(err){
+      showToast('Saved book locally, sync failed: ' + (err.message || err))
+    }
   }
 
   if(loading) return <div className="text-center py-5">Loading...</div>

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { StorageService } from '../services/storageService'
 import { showToast } from '../services/toastService'
 import { generateUpiLink } from '../utils/upiGenerator'
-import { syncSalesToSheets, pingSheetsEndpoint } from '../services/sheetsService'
+import { syncSalesToSheets, DEFAULT_SHEETS_ENDPOINT } from '../services/sheetsService'
 import generateBillNo from '../utils/generateBillNo'
 
 function formatDate(d=new Date()){
@@ -10,8 +10,6 @@ function formatDate(d=new Date()){
 }
 
 export default function Payment(){
-  const DEFAULT_SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzdb2cN9LYg56pQgy70OmQ9DK7wLWCmqWeQEBDjG0dIUyuJf5NczoxIIwtaP1X0XgnY/exec'
-
   const [cart,setCart] = useState([])
   const [sales,setSales] = useState([])
   const [loading,setLoading] = useState(true)
@@ -19,7 +17,6 @@ export default function Payment(){
 
   const [showQr,setShowQr] = useState(false)
   const [qrImg,setQrImg] = useState('')
-  const [sheetsEndpoint,setSheetsEndpoint] = useState(localStorage.getItem('sheetsEndpoint') || DEFAULT_SHEETS_ENDPOINT)
   const [role,setRole] = useState(StorageService.getUserRole())
 
   useEffect(()=>{
@@ -27,14 +24,6 @@ export default function Payment(){
     setCart(StorageService.getCart())
     setSales(StorageService.getSales())
     setRole(StorageService.getUserRole())
-    // ensure sheets endpoint is configured (use provided default if empty)
-    try{
-      const cur = localStorage.getItem('sheetsEndpoint')
-      if(!cur){
-        localStorage.setItem('sheetsEndpoint', DEFAULT_SHEETS_ENDPOINT)
-      }
-      setSheetsEndpoint(localStorage.getItem('sheetsEndpoint') || DEFAULT_SHEETS_ENDPOINT)
-    }catch(e){}
     setLoading(false)
   },[])
 
@@ -92,13 +81,9 @@ export default function Payment(){
 
     // try to auto-sync this new bill to Google Sheets (for all users)
     try{
-      const ep = sheetsEndpoint || localStorage.getItem('sheetsEndpoint')
-      if(ep){
-        showToast('Syncing bill to Google Sheets...')
-        // send only the newly created record
-        const res = await syncSalesToSheets(ep, [record])
-        showToast('Bill synced to Google Sheets')
-      }
+      showToast('Syncing bill to Google Sheets...')
+      await syncSalesToSheets(DEFAULT_SHEETS_ENDPOINT, [record])
+      showToast('Bill synced to Google Sheets')
     }catch(err){
       // don't block the user — just notify
       showToast('Auto-sync failed: ' + (err.message || err))

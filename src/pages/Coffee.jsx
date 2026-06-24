@@ -3,6 +3,7 @@ import { StorageService } from '../services/storageService'
 import { showToast } from '../services/toastService'
 import CoffeeCard from '../components/CoffeeCard'
 import Cart from '../components/Cart'
+import { fetchCoffeesFromSheets, saveCoffeesToSheets, DEFAULT_SHEETS_ENDPOINT } from '../services/sheetsService'
 
 function CoffeeForm({initial, onCancel, onSave}){
   const [name,setName] = useState(initial.name||'')
@@ -36,31 +37,54 @@ export default function Coffee(){
   const [cart,setCart] = useState(StorageService.getCart())
 
   useEffect(()=>{
-    setLoading(true)
-    setCoffees(StorageService.getCoffees())
-    setCart(StorageService.getCart())
-    setLoading(false)
+    const loadCoffees = async ()=>{
+      setLoading(true)
+      const localCoffees = StorageService.getCoffees()
+      setCoffees(localCoffees)
+      setCart(StorageService.getCart())
+      try{
+        const remoteCoffees = await fetchCoffeesFromSheets(DEFAULT_SHEETS_ENDPOINT)
+        if(Array.isArray(remoteCoffees) && remoteCoffees.length > 0){
+          setCoffees(remoteCoffees)
+          StorageService.saveCoffees(remoteCoffees)
+        }
+      }catch(err){
+        console.warn('Coffee sync failed, using local coffees', err)
+      }
+      setLoading(false)
+    }
+    loadCoffees()
   },[])
 
   useEffect(()=>{ StorageService.saveCart(cart) },[cart])
 
   function addCoffee(){ setEditing({}); setShowForm(true) }
   function editCoffee(c){ setEditing(c); setShowForm(true) }
-  function deleteCoffee(c){
+  async function deleteCoffee(c){
     if(!confirm(`Delete ${c.name}?`)) return
     const next = coffees.filter(x=> x.id!==c.id)
     setCoffees(next)
     StorageService.saveCoffees(next)
-    showToast('Coffee deleted', 'warning')
+    try{
+      await saveCoffeesToSheets(DEFAULT_SHEETS_ENDPOINT, next)
+      showToast('Coffee deleted and synced', 'warning')
+    }catch(err){
+      showToast('Coffee deleted locally, sync failed: ' + (err.message || err))
+    }
   }
-  function saveCoffee(c){
+  async function saveCoffee(c){
     let next
     if(c.id){ next = coffees.map(x=> x.id===c.id?c:x) }
     else { const id = coffees.reduce((m,b)=>Math.max(m,b.id),0)+1; next = [...coffees, {...c,id}] }
     setCoffees(next)
     StorageService.saveCoffees(next)
     setShowForm(false); setEditing(null)
-    showToast('Saved coffee')
+    try{
+      await saveCoffeesToSheets(DEFAULT_SHEETS_ENDPOINT, next)
+      showToast('Saved coffee and synced')
+    }catch(err){
+      showToast('Saved coffee locally, sync failed: ' + (err.message || err))
+    }
   }
 
   if(loading) return <div className="text-center py-5">Loading...</div>

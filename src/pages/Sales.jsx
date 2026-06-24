@@ -3,7 +3,7 @@ import BookCard from '../components/BookCard'
 import Cart from '../components/Cart'
 import { StorageService } from '../services/storageService'
 import { showToast } from '../services/toastService'
-import { syncSalesToSheets, pingSheetsEndpoint } from '../services/sheetsService'
+import { syncSalesToSheets, pingSheetsEndpoint, DEFAULT_SHEETS_ENDPOINT } from '../services/sheetsService'
 
 export default function Sales(){
   const [books,setBooks] = useState([])
@@ -82,14 +82,11 @@ export default function Sales(){
           <div className="mt-3 d-grid gap-2">
             <button className="btn btn-outline-secondary" onClick={async ()=>{
               try{
-                const ep = localStorage.getItem('sheetsEndpoint') || prompt('Enter Google Sheets Apps Script URL')
-                if(!ep) return
-                localStorage.setItem('sheetsEndpoint', ep)
                 showToast('Pinging endpoint...')
-                const ping = await pingSheetsEndpoint(ep).catch(e=>{throw new Error('Ping failed: '+e.message)})
+                const ping = await pingSheetsEndpoint(DEFAULT_SHEETS_ENDPOINT).catch(e=>{throw new Error('Ping failed: '+e.message)})
                 showToast('Endpoint reachable: ' + (ping.message || ping.status || 'OK'))
                 showToast('Syncing sales...')
-                const res = await syncSalesToSheets(ep, StorageService.getSales())
+                const res = await syncSalesToSheets(DEFAULT_SHEETS_ENDPOINT, StorageService.getSales())
                 showToast('Synced to Google Sheets: ' + (res.appended || res.status || JSON.stringify(res)))
               }catch(ex){
                 showToast('Sheets sync failed: ' + ex.message)

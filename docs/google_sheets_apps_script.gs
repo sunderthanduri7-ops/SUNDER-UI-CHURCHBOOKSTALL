@@ -9,6 +9,17 @@
  */
 
 const SPREADSHEET_ID = '1iGFk4GIwiEihxomDH0x21_PiXjyuPZpLIORAb0bYWYg'
+const SALES_SHEET_NAME = 'sales'
+const BOOKS_SHEET_NAME = 'books'
+const COFFEES_SHEET_NAME = 'coffees'
+
+function getSheet(ss, name){
+  let sheet = ss.getSheetByName(name)
+  if(!sheet){
+    sheet = ss.insertSheet(name)
+  }
+  return sheet
+}
 
 function doPost(e){
   try{
@@ -28,20 +39,46 @@ function doPost(e){
         throw new Error('Unable to parse postData contents')
       }
     }
+
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID)
+
+    if(Array.isArray(payload.books)){
+      const sheet = getSheet(ss, BOOKS_SHEET_NAME)
+      sheet.clearContents()
+      const rows = [['id','name','price','category']]
+      payload.books.forEach(book => {
+        rows.push([book.id||'', book.name||'', book.price||'', book.category||''])
+      })
+      if(rows.length > 0){
+        sheet.getRange(1,1,rows.length, rows[0].length).setValues(rows)
+      }
+      return _json({status:'ok', books: payload.books.length})
+    }
+
+    if(Array.isArray(payload.coffees)){
+      const sheet = getSheet(ss, COFFEES_SHEET_NAME)
+      sheet.clearContents()
+      const rows = [['id','name','price','size']]
+      payload.coffees.forEach(coffee => {
+        rows.push([coffee.id||'', coffee.name||'', coffee.price||'', coffee.size||''])
+      })
+      if(rows.length > 0){
+        sheet.getRange(1,1,rows.length, rows[0].length).setValues(rows)
+      }
+      return _json({status:'ok', coffees: payload.coffees.length})
+    }
+
     const sales = payload.sales || []
-    // handle clear request
     if(payload.clear){
-      const ss = SpreadsheetApp.openById(SPREADSHEET_ID)
-      const sheet = ss.getSheets()[0]
-      // clear all content but keep header row if present
+      const sheet = getSheet(ss, SALES_SHEET_NAME)
       const last = sheet.getLastRow()
       if(last > 1){
         sheet.getRange(2,1,last-1,sheet.getLastColumn()).clearContent()
       }
       return _json({status:'ok', cleared: true})
     }
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID)
-    const sheet = ss.getSheets()[0]
+
+    const sheet = getSheet(ss, SALES_SHEET_NAME)
     sales.forEach(sale => {
       const bill = sale.billNumber || ''
       const date = sale.date || ''
@@ -57,7 +94,60 @@ function doPost(e){
 }
 
 function doGet(e){
-  // simple health check to verify deployment and reachability
+  const type = (e.parameter.type || '').toLowerCase()
+  if(type === 'books'){
+    try{
+      const ss = SpreadsheetApp.openById(SPREADSHEET_ID)
+      const sheet = getSheet(ss, BOOKS_SHEET_NAME)
+      const data = sheet.getDataRange().getValues()
+      const books = []
+      const headers = data[0] || []
+      const idIndex = headers.indexOf('id')
+      const nameIndex = headers.indexOf('name')
+      const priceIndex = headers.indexOf('price')
+      const categoryIndex = headers.indexOf('category')
+      for(let i=1;i<data.length;i++){
+        const row = data[i]
+        if(!row || row.length === 0) continue
+        books.push({
+          id: row[idIndex] || '',
+          name: row[nameIndex] || '',
+          price: Number(row[priceIndex] || 0),
+          category: row[categoryIndex] || ''
+        })
+      }
+      return _json({status:'ok', books})
+    }catch(err){
+      return _json({error: err.message})
+    }
+  }
+
+  if(type === 'coffees'){
+    try{
+      const ss = SpreadsheetApp.openById(SPREADSHEET_ID)
+      const sheet = getSheet(ss, COFFEES_SHEET_NAME)
+      const data = sheet.getDataRange().getValues()
+      const coffees = []
+      const headers = data[0] || []
+      const idIndex = headers.indexOf('id')
+      const nameIndex = headers.indexOf('name')
+      const priceIndex = headers.indexOf('price')
+      const sizeIndex = headers.indexOf('size')
+      for(let i=1;i<data.length;i++){
+        const row = data[i]
+        if(!row || row.length === 0) continue
+        coffees.push({
+          id: row[idIndex] || '',
+          name: row[nameIndex] || '',
+          price: Number(row[priceIndex] || 0),
+          size: row[sizeIndex] || ''
+        })
+      }
+      return _json({status:'ok', coffees})
+    }catch(err){
+      return _json({error: err.message})
+    }
+  }
   return _json({status: 'ok', message: 'Apps Script reachable'})
 }
 
