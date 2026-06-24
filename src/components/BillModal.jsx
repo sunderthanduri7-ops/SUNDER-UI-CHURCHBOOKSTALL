@@ -12,6 +12,7 @@ export default function BillModal({show, onClose, bill}){
           </div>
           <div className="modal-body">
             <div>Date: {bill.date}</div>
+            <div>Type: {bill.type || '—'}</div>
             <hr/>
             {bill.items.map(it=> (
               <div key={it.id} className="d-flex justify-content-between my-1">

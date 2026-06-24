@@ -19,6 +19,10 @@ export default function SalesHistory(){
     }
     setSales(StorageService.getSales())
     setLoading(false)
+    // listen for updates when sales are changed elsewhere
+    const handler = ()=> setSales(StorageService.getSales())
+    window.addEventListener('salesUpdated', handler)
+    return ()=> window.removeEventListener('salesUpdated', handler)
   },[])
 
   function open(b){ setSelected(b) }
@@ -54,7 +58,7 @@ export default function SalesHistory(){
           <button key={s.billNumber} className="list-group-item list-group-item-action d-flex justify-content-between" onClick={()=>open(s)}>
             <div>
               <div><strong>{s.billNumber}</strong></div>
-              <div className="text-muted">{s.date} — {s.items.length} items</div>
+              <div className="text-muted">{s.date} — {s.items.length} items — {s.type || '—'}</div>
             </div>
             <div className="fw-bold">₹{s.total}</div>
           </button>

@@ -3,6 +3,7 @@ import BookCard from '../components/BookCard'
 import Cart from '../components/Cart'
 import { StorageService } from '../services/storageService'
 import { showToast } from '../services/toastService'
+import { syncSalesToSheets, pingSheetsEndpoint } from '../services/sheetsService'
 
 export default function Sales(){
   const [books,setBooks] = useState([])
@@ -77,6 +78,36 @@ export default function Sales(){
         <div className="mt-3">
           <a href="/payment" className="btn btn-success w-100">Proceed to Payment</a>
         </div>
+        {isAdmin && (
+          <div className="mt-3 d-grid gap-2">
+            <button className="btn btn-outline-secondary" onClick={async ()=>{
+              try{
+                const ep = localStorage.getItem('sheetsEndpoint') || prompt('Enter Google Sheets Apps Script URL')
+                if(!ep) return
+                localStorage.setItem('sheetsEndpoint', ep)
+                showToast('Pinging endpoint...')
+                const ping = await pingSheetsEndpoint(ep).catch(e=>{throw new Error('Ping failed: '+e.message)})
+                showToast('Endpoint reachable: ' + (ping.message || ping.status || 'OK'))
+                showToast('Syncing sales...')
+                const res = await syncSalesToSheets(ep, StorageService.getSales())
+                showToast('Synced to Google Sheets: ' + (res.appended || res.status || JSON.stringify(res)))
+              }catch(ex){
+                showToast('Sheets sync failed: ' + ex.message)
+              }
+            }} disabled={StorageService.getSales().length===0}>Sync Sales to Google Sheets</button>
+
+            <button className="btn btn-danger" onClick={()=>{
+              if(!confirm('Clear local sales? This cannot be undone locally.')) return
+              try{
+                StorageService.saveSales([])
+                showToast('Local sales cleared')
+                window.dispatchEvent(new CustomEvent('salesUpdated'))
+              }catch(err){
+                showToast('Clear failed: ' + (err.message || err))
+              }
+            }} disabled={StorageService.getSales().length===0}>Clear Local Sales</button>
+          </div>
+        )}
       </div>
     </div>
   )

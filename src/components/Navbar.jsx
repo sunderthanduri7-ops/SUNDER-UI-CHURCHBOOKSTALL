@@ -19,6 +19,13 @@ export default function Navbar(){
 
   const isAdmin = role === 'admin'
 
+  function gotoBooks(e){
+    try{ localStorage.setItem('openCategory','books') }catch(_){}
+  }
+  function gotoCoffee(e){
+    try{ localStorage.setItem('openCategory','coffee') }catch(_){}
+  }
+
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
       <div className="container">
@@ -29,8 +36,8 @@ export default function Navbar(){
         <div className="collapse navbar-collapse" id="nav">
           <ul className="navbar-nav ms-auto">
             {isAdmin && <li className="nav-item"><NavLink className="nav-link" to="/sales">Sales Counter</NavLink></li>}
-            <li className="nav-item"><NavLink className="nav-link" to="/books">Books</NavLink></li>
-            <li className="nav-item"><NavLink className="nav-link" to="/coffee">Coffee</NavLink></li>
+            <li className="nav-item"><NavLink className="nav-link" to="/books" onClick={gotoBooks}>Books</NavLink></li>
+            <li className="nav-item"><NavLink className="nav-link" to="/coffee" onClick={gotoCoffee}>Coffee</NavLink></li>
             {isAdmin && <li className="nav-item"><NavLink className="nav-link" to="/history">Sales History</NavLink></li>}
             <li className="nav-item d-flex align-items-center ms-3">
               {role==='admin' ? (

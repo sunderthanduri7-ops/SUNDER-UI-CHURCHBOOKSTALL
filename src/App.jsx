@@ -18,7 +18,7 @@ export default function App(){
       <Navbar />
       <div className="container my-4">
             <Routes>
-              <Route path="/" element={<Navigate to="/books" replace />} />
+              <Route path="/" element={<RootRedirect />} />
               <Route path="/login" element={<Login/>} />
               <Route path="/sales" element={<Sales/>} />
               <Route path="/payment" element={<Payment/>} />
@@ -29,4 +29,17 @@ export default function App(){
       </div>
     </div>
   )
+}
+
+function RootRedirect(){
+  // check preference stored in localStorage: 'openCategory' -> 'books' or 'coffee'
+  let target = '/books'
+  try{
+    const pref = localStorage.getItem('openCategory')
+    if(pref === 'coffee') target = '/coffee'
+    else target = '/books'
+  }catch(e){
+    target = '/books'
+  }
+  return <Navigate to={target} replace />
 }
