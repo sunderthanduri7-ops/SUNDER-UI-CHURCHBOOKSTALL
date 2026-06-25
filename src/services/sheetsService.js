@@ -1,4 +1,4 @@
-export const DEFAULT_SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxnoWTogThOk7D95Wb2Z8PI6FWWyWlvawceRsrf6sMiMxG4KCGHL8iQzoATePORTm-_/exec'
+export const DEFAULT_SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzSi-zbrwby6_Kp9swF-x6SRxpYnfB2nMGwbtJfUGDlLQd1DyY_n7FReFJEF2Q8QQT0/exec'
 
 export async function pingSheetsEndpoint(endpoint){
   if(!endpoint) throw new Error('Missing endpoint')

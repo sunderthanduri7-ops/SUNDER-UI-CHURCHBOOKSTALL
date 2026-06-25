@@ -43,3 +43,24 @@ body{
     display: none;
   }
 }
+
+/* Keep cart details above the mobile banner and make it scrollable */
+.cart-details-card {
+  z-index: 1110;
+}
+
+@media (max-width: 767px) {
+  .cart-details-card {
+    position: fixed;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 4.75rem;
+    border-radius: 0.5rem;
+    max-height: 60vh;
+    overflow: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  }
+  .cart-mobile-spacer {
+    height: 6.5rem;
+  }
+}

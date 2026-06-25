@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 export default function Cart({title='Cart', items, onIncrease, onDecrease, onRemove}){
   const [mobile, setMobile] = useState(false)
@@ -28,9 +29,12 @@ export default function Cart({title='Cart', items, onIncrease, onDecrease, onRem
             <div className="fw-bold">Sales Counter</div>
             <div className="text-muted">{totalCount} item(s), ₹{total}</div>
           </div>
-          <button className="btn btn-sm btn-outline-primary cart-details-btn" onClick={()=>setOpen(prev=>!prev)}>
-            {open ? 'Hide' : 'View'} Cart
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <Link to="/payment" className="btn btn-sm btn-success">Pay</Link>
+            <button className="btn btn-sm btn-outline-primary cart-details-btn" onClick={()=>setOpen(prev=>!prev)}>
+              {open ? 'Hide' : 'View'} Cart
+            </button>
+          </div>
         </div>
       )}
 
@@ -68,6 +72,12 @@ export default function Cart({title='Cart', items, onIncrease, onDecrease, onRem
       )}
 
       {mobile && showCartDetails && <div className="cart-mobile-spacer" />}
+
+      {mobile && showCartDetails && (
+        <div className="mt-3 d-grid gap-2">
+          <Link to="/payment" className="btn btn-success w-100">Proceed to Payment</Link>
+        </div>
+      )}
     </>
   )
 }
